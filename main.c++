@@ -26,7 +26,7 @@ int lastKnownPosition = 2;  // Start with the assumption that the line is in the
 void setup() {
   Serial.begin(9600);
 
-  // Initialize sensor pins
+  // Initialize sensor pins @@
   for (int i = 0; i < SENSOR_COUNT; i++) {
     pinMode(sensorPins[i], INPUT);
   }
