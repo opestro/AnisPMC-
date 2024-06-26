@@ -1,7 +1,7 @@
 #define SENSOR_COUNT 5
 
 // Pins for the 5 TCRT5000 sensors
-const int sensorPins[SENSOR_COUNT] = {2, 3, 4, 5, 6};
+const int sensorPins[SENSOR_COUNT] = {2, 3, 4, 5, 6};  // Assuming the central sensor is on pin 4
 
 // Motor control pins
 const int motorLeftForward = 9;
@@ -26,7 +26,7 @@ int lastKnownPosition = 2;  // Start with the assumption that the line is in the
 void setup() {
   Serial.begin(9600);
 
-  // Initialize sensor pins @@
+  // Initialize sensor pins
   for (int i = 0; i < SENSOR_COUNT; i++) {
     pinMode(sensorPins[i], INPUT);
   }
@@ -65,16 +65,28 @@ void loop() {
       stopMoving();
     }
   } else {
-    // Line is detected, move accordingly
-    if (linePosition < 2) {
-      // Turn left
-      moveLeft();
-    } else if (linePosition > 2) {
-      // Turn right
-      moveRight();
-    } else {
+    // Check for special cases where three sensors on one side are activated
+    if (sensorValues[0] == LOW && sensorValues[1] == LOW && sensorValues[2] == LOW) {
+      // Turn left sharply
+      turnLeftSharp();
+    } else if (sensorValues[2] == LOW && sensorValues[3] == LOW && sensorValues[4] == LOW) {
+      // Turn right sharply
+      turnRightSharp();
+    } else if (sensorValues[2] == LOW) {  // Central sensor is activated
       // Move forward
       moveForward();
+    } else {
+      // Normal line following
+      if (linePosition < 2) {
+        // Turn left
+        moveLeft();
+      } else if (linePosition > 2) {
+        // Turn right
+        moveRight();
+      } else {
+        // Move forward
+        moveForward();
+      }
     }
     // Update last known position
     lastKnownPosition = linePosition;
@@ -135,6 +147,22 @@ void turnLeftSlowly() {
 
 void turnRightSlowly() {
   setMotorSpeed(baseSpeed, baseSpeed / 2);
+  digitalWrite(motorLeftForward, HIGH);
+  digitalWrite(motorLeftBackward, LOW);
+  digitalWrite(motorRightForward, LOW);
+  digitalWrite(motorRightBackward, HIGH);
+}
+
+void turnLeftSharp() {
+  setMotorSpeed(maxSpeed, maxSpeed);
+  digitalWrite(motorLeftForward, LOW);
+  digitalWrite(motorLeftBackward, HIGH);
+  digitalWrite(motorRightForward, HIGH);
+  digitalWrite(motorRightBackward, LOW);
+}
+
+void turnRightSharp() {
+  setMotorSpeed(maxSpeed, maxSpeed);
   digitalWrite(motorLeftForward, HIGH);
   digitalWrite(motorLeftBackward, LOW);
   digitalWrite(motorRightForward, LOW);
